@@ -16,15 +16,15 @@ defmodule TwelveDays do
   @first_part "On the _count_ day of Christmas my true love gave to me, "
 
   @spec verse(number :: integer) :: String.t()
-  def verse(1), do: format_first_part() <> "a Partridge in a Pear Tree."
-  def verse(number), do: format_first_part(number) <> descending_gift_list(number) <> "."
+  def verse(1), do: format_first_part()  <> "a Partridge in a Pear Tree."
+  def verse(n), do: format_first_part(n) <> descending_gift_list(n) <> "."
 
   @doc """
   Given a `starting_verse` and an `ending_verse`, return the verses for each
   included day, one per line.
   """
   @spec verses(starting_verse :: integer, ending_verse :: integer) :: String.t()
-  def verses(first, last), do: first..last |> Enum.map(fn n -> verse(n) end) |> Enum.join("\n")
+  def verses(first, last), do: first..last |> Enum.map(&(verse &1)) |> Enum.join("\n")
 
   @doc """
   Sing all 12 verses, in order, one verse per line.

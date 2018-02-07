@@ -24,7 +24,7 @@ defmodule TwelveDays do
   included day, one per line.
   """
   @spec verses(starting_verse :: integer, ending_verse :: integer) :: String.t()
-  def verses(first, last), do: first..last |> Enum.map(&(verse &1)) |> Enum.join("\n")
+  def verses(starting_verse, ending_verse), do: starting_verse..ending_verse |> Enum.map(&verse/1) |> Enum.join("\n")
 
   @doc """
   Sing all 12 verses, in order, one verse per line.

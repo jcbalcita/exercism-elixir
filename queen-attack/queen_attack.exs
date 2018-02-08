@@ -7,12 +7,9 @@ defmodule Queens do
   """
   @spec new() :: Queens.t()
   @spec new({integer, integer}, {integer, integer}) :: Queens.t()
-
   def new, do: %Queens{black: {7, 3}, white: {0, 3}}
-
+  def new(same_pos, same_pos), do: raise ArgumentError
   def new(white, black) do
-    if white == black, do: raise ArgumentError
-
     %Queens{white: white, black: black}
   end
 
@@ -33,15 +30,7 @@ defmodule Queens do
   Checks if the queens can attack each other
   """
   @spec can_attack?(Queens.t()) :: boolean
-  def can_attack?(%Queens{black: black, white: white} = queens) do
-    is_straight_attack(black, white) || is_diagonal_attack(black, white)
-  end
-
-  defp is_straight_attack(black, white) do
-    elem(black, 0) == elem(white, 0) || elem(black, 1) == elem(white, 1)
-  end
-
-  defp is_diagonal_attack(black, white) do
-    elem(black, 0) - elem(white, 0) |> abs == (elem(black, 1) - elem(white, 1)) |> abs
-  end
+  def can_attack?(%{black: {row, _}, white: {row, _}}), do: true
+  def can_attack?(%{black: {_, col}, white: {row, col}}), do: true
+  def can_attack?(%Queens{black: {row, col}, white: {row_, col_}} = queens), do: abs(row - row_) == abs(col - col_)
 end

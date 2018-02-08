@@ -31,6 +31,6 @@ defmodule Queens do
   """
   @spec can_attack?(Queens.t()) :: boolean
   def can_attack?(%{black: {row, _}, white: {row, _}}), do: true
-  def can_attack?(%{black: {_, col}, white: {row, col}}), do: true
+  def can_attack?(%{black: {_, col}, white: {_, col}}), do: true
   def can_attack?(%Queens{black: {row, col}, white: {row_, col_}} = queens), do: abs(row - row_) == abs(col - col_)
 end

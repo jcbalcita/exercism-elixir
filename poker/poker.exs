@@ -52,17 +52,17 @@ defmodule Poker do
     @spec new(list(Card.t)) :: Hand.t
     def new(cards) do
       %Hand{cards: cards}
-      |> find_high_hand
+      |> add_high_hand
     end
 
-    @spec find_winning_hands(list(Hand.t)) :: list(Hand.t)
-    def find_winning_hands(hands) do
-      best_poker_hand = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
-      best_hands = Enum.filter(hands, fn h -> h.high_hand |> elem(0) == best_poker_hand.high_hand |> elem(0) end)
+    @spec determine_winning_hands(list(Hand.t)) :: list(Hand.t)
+    def determine_winning_hands(hands) do
+      best_hand = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
+      maybe_winning_hands = Enum.filter(hands, fn h -> h.high_hand |> elem(0) == best_hand.high_hand |> elem(0) end)
 
-      case Enum.count(best_hands) > 1 do
-        true  -> break_tie(best_hands)
-        false -> best_hands
+      case Enum.count(maybe_winning_hands) > 1 do
+        true  -> break_tie(maybe_winning_hands)
+        false -> maybe_winning_hands
       end
     end
 
@@ -72,7 +72,7 @@ defmodule Poker do
 
       tied_hands 
       |> Enum.map(fn hand -> {hand.high_hand |> elem(1), hand} end)
-      |> compare_high_cards(n_cards_to_compare, 0)
+      |> compare_ranks(n_cards_to_compare, 0)
       |> Enum.map(&elem(&1, 1))
     end
 
@@ -87,15 +87,18 @@ defmodule Poker do
       * A list of the Hand's Card ranks, ordered as appropriate for comparison
       * The Hand itself
     """ 
-    def compare_high_cards(tpls, len, i) when i == len, do: tpls
-    def compare_high_cards(tpls, len, i) do
+    @spec compare_ranks(list({list(integer), Hand.t}), integer, integer) :: list({list(integer), Hand.t})
+    def compare_ranks(tpls, len, i) when i == len, do: tpls
+    def compare_ranks(tpls, len, i) do
       high_for_round = tpls |> Enum.max_by(fn t -> Enum.at(elem(t, 0), i) end) |> elem(0) |> Enum.at(i)
 
-      tpls |> Enum.filter(fn t -> Enum.at(elem(t, 0), i) == high_for_round end)
-      |> compare_high_cards(len, i + 1)
+      tpls 
+      |> Enum.filter(fn t -> Enum.at(elem(t, 0), i) == high_for_round end)
+      |> compare_ranks(len, i + 1)
     end
 
-    def find_high_hand(hand) do
+    @spec add_high_hand(Hand.t) :: Hand.t
+    def add_high_hand(hand) do
       basic_cards =
         hand.cards
         |> Enum.map(fn c -> {c.rank, c.suit} end)
@@ -139,7 +142,7 @@ defmodule Poker do
   def best_hand(raw_hands) do
     raw_hands
     |> Enum.map(&transform_to_hand(&1))
-    |> Hand.find_winning_hands
+    |> Hand.determine_winning_hands
     |> Enum.map(&transform_to_raw_hand/1)
   end
 

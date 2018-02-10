@@ -75,11 +75,11 @@ defmodule Hand do
 
   def break_tie(tied_hands) do
     hand = tied_hands |> Enum.at(0)
-    n_cards_to_compare = hand.high_hand |> elem(1) |> Enum.count
+    n_ranks_to_compare = hand.high_hand |> elem(1) |> Enum.count
 
     tied_hands 
     |> Enum.map(fn hand -> {elem(hand.high_hand, 1), hand} end)
-    |> compare_ranks(n_cards_to_compare, 0)
+    |> compare_ranks(n_ranks_to_compare, 0)
     |> Enum.map(&elem(&1, 1))
   end
 

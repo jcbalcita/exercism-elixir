@@ -47,91 +47,91 @@ defmodule Poker do
   end
 
 
-defmodule Hand do
-  @moduledoc """
-  Hand, the ability to analyze and compare poker hands from a list of cards.
-  """
-  @type t :: %Hand{high_hand: {atom, list(integer)}, cards: list(Cards.t)}
-  defstruct high_hand: nil, cards: nil
+  defmodule Hand do
+    @moduledoc """
+    Hand, the ability to analyze and compare poker hands from a list of cards.
+    """
+    @type t :: %Hand{high_hand: {atom, list(integer)}, cards: list(Cards.t)}
+    defstruct high_hand: nil, cards: nil
 
-  @poker_hands [:high_card, :one_pair, :two_pair, :three_of_a_kind, :straight, :flush, :full_house, :four_of_a_kind, :straight_flush]
+    @poker_hands [:high_card, :one_pair, :two_pair, :three_of_a_kind, :straight, :flush, :full_house, :four_of_a_kind, :straight_flush]
 
-  @spec new(list(Card.t)) :: Hand.t
-  def new(cards) do
-    %Hand{cards: cards}
-    |> add_high_hand
-  end
-
-  @spec determine_winning_hands(list(Hand.t)) :: list(Hand.t)
-  def determine_winning_hands(hands) do
-    %{high_hand: {hh, _}} = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
-    maybe_tied_hands = Enum.filter(hands, fn %{high_hand: {hh_, _}} -> hh_ == hh end)
-
-    case Enum.count(maybe_tied_hands) > 1 do
-      true  -> break_tie(maybe_tied_hands)
-      false -> maybe_tied_hands
+    @spec new(list(Card.t)) :: Hand.t
+    def new(cards) do
+      %Hand{cards: cards}
+      |> add_high_hand
     end
+
+    @spec determine_winning_hands(list(Hand.t)) :: list(Hand.t)
+    def determine_winning_hands(hands) do
+      %{high_hand: {hh, _}} = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
+      maybe_tied_hands = Enum.filter(hands, fn %{high_hand: {hh_, _}} -> hh_ == hh end)
+
+      case Enum.count(maybe_tied_hands) > 1 do
+        true  -> break_tie(maybe_tied_hands)
+        false -> maybe_tied_hands
+      end
+    end
+
+    defp break_tie(tied_hands) do
+      hand = tied_hands |> Enum.at(0)
+      n_ranks_to_compare = hand.high_hand |> elem(1) |> Enum.count
+
+      tied_hands 
+      |> Enum.map(fn hand -> {elem(hand.high_hand, 1), hand} end)
+      |> compare_ranks(n_ranks_to_compare, 0)
+      |> Enum.map(&elem(&1, 1))
+    end
+
+    @spec compare_ranks(list({list(integer), Hand.t}), integer, integer) :: list({list(integer), Hand.t})
+    defp compare_ranks(tpls, len, i) when i == len, do: tpls
+    defp compare_ranks(tpls, len, i) do
+      high_for_round = tpls |> Enum.max_by(fn t -> Enum.at(elem(t, 0), i) end) |> elem(0) |> Enum.at(i)
+
+      tpls 
+      |> Enum.filter(fn t -> Enum.at(elem(t, 0), i) == high_for_round end)
+      |> compare_ranks(len, i + 1)
+    end
+
+    @spec add_high_hand(Hand.t) :: Hand.t
+    defp add_high_hand(hand) do
+      basic_cards =
+        hand.cards
+        |> Enum.map(fn c -> {c.rank, c.suit} end)
+        |> Enum.sort |> Enum.chunk_by(fn {r, _} -> r end) |> Enum.sort_by(&-Enum.count(&1)) |> List.flatten
+
+      %Hand{hand | high_hand: high_hand(basic_cards)}
+    end
+
+    @spec high_hand(list({integer, String.t})) :: {atom, list(integer)}
+    defp high_hand([{a, s}, {b, s}, {c, s}, {d, s}, {e, s}]), do: flush_or_straight_flush(sort_ [a, b, c, d, e])
+    defp high_hand([{a, _}, {a, _}, {a, _}, {a, _}, {b, _}]), do: {:four_of_a_kind, [a, b]}
+    defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {b, _}]), do: {:full_house, [a, b]}
+    defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {c, _}]), do: {:three_of_a_kind, [a | sort_([b, c])]}
+    defp high_hand([{a, _}, {a, _}, {b, _}, {b, _}, {c, _}]), do: {:two_pair, [sort_([a, b]), c]}
+    defp high_hand([{a, _}, {a, _}, {b, _}, {c, _}, {d, _}]), do: {:one_pair, [a | sort_([b, c, d])]}
+    defp high_hand([{a, _}, {b, _}, {c, _}, {d, _}, {e, _}]), do: straight_or_high_card(sort_ [a, b, c, d, e])
+
+    defp straight_or_high_card(ranks) do
+      if is_straight?(ranks), do: {:straight, high_for_straight(ranks)}, else: {:high_card, ranks}
+    end
+
+    defp flush_or_straight_flush(ranks) do
+      if is_straight?(ranks), do: {:straight_flush, high_for_straight(ranks)}, else: {:flush, ranks}
+    end
+
+    defp is_straight?(ranks) do
+      replaced_ace = ranks |> Enum.map(fn r -> if r == 14, do: 1, else: r end)
+      consecutive?(ranks) || consecutive?(replaced_ace)
+    end
+
+    defp consecutive?(ranks), do: Enum.max(ranks) - Enum.min(ranks) == 4
+
+    defp high_for_straight([14, x, _, _, 2]), do: [x]
+    defp high_for_straight([x | _]), do: [x]
+
+    defp sort_(list), do: list |> Enum.sort(&(&1 >= &2))
   end
-
-  defp break_tie(tied_hands) do
-    hand = tied_hands |> Enum.at(0)
-    n_ranks_to_compare = hand.high_hand |> elem(1) |> Enum.count
-
-    tied_hands 
-    |> Enum.map(fn hand -> {elem(hand.high_hand, 1), hand} end)
-    |> compare_ranks(n_ranks_to_compare, 0)
-    |> Enum.map(&elem(&1, 1))
-  end
-
-  @spec compare_ranks(list({list(integer), Hand.t}), integer, integer) :: list({list(integer), Hand.t})
-  defp compare_ranks(tpls, len, i) when i == len, do: tpls
-  defp compare_ranks(tpls, len, i) do
-    high_for_round = tpls |> Enum.max_by(fn t -> Enum.at(elem(t, 0), i) end) |> elem(0) |> Enum.at(i)
-
-    tpls 
-    |> Enum.filter(fn t -> Enum.at(elem(t, 0), i) == high_for_round end)
-    |> compare_ranks(len, i + 1)
-  end
-
-  @spec add_high_hand(Hand.t) :: Hand.t
-  defp add_high_hand(hand) do
-    basic_cards =
-      hand.cards
-      |> Enum.map(fn c -> {c.rank, c.suit} end)
-      |> Enum.sort |> Enum.chunk_by(fn {r, _} -> r end) |> Enum.sort_by(&-Enum.count(&1)) |> List.flatten
-
-    %Hand{hand | high_hand: high_hand(basic_cards)}
-  end
-
-  @spec high_hand(list({integer, String.t})) :: {atom, list(integer)}
-  defp high_hand([{a, s}, {b, s}, {c, s}, {d, s}, {e, s}]), do: flush_or_straight_flush(sort_ [a, b, c, d, e])
-  defp high_hand([{a, _}, {a, _}, {a, _}, {a, _}, {b, _}]), do: {:four_of_a_kind, [a, b]}
-  defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {b, _}]), do: {:full_house, [a, b]}
-  defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {c, _}]), do: {:three_of_a_kind, [a | sort_([b, c])]}
-  defp high_hand([{a, _}, {a, _}, {b, _}, {b, _}, {c, _}]), do: {:two_pair, [sort_([a, b]), c]}
-  defp high_hand([{a, _}, {a, _}, {b, _}, {c, _}, {d, _}]), do: {:one_pair, [a | sort_([b, c, d])]}
-  defp high_hand([{a, _}, {b, _}, {c, _}, {d, _}, {e, _}]), do: straight_or_high_card(sort_ [a, b, c, d, e])
-
-  defp straight_or_high_card(ranks) do
-    if is_straight?(ranks), do: {:straight, high_for_straight(ranks)}, else: {:high_card, ranks}
-  end
-
-  defp flush_or_straight_flush(ranks) do
-    if is_straight?(ranks), do: {:straight_flush, high_for_straight(ranks)}, else: {:flush, ranks}
-  end
-
-  defp is_straight?(ranks) do
-    replaced_ace = ranks |> Enum.map(fn r -> if r == 14, do: 1, else: r end)
-    consecutive?(ranks) || consecutive?(replaced_ace)
-  end
-
-  defp consecutive?(ranks), do: Enum.max(ranks) - Enum.min(ranks) == 4
-
-  defp high_for_straight([14, x, _, _, 2]), do: [x]
-  defp high_for_straight([x | _]), do: [x]
-
-  defp sort_(list), do: list |> Enum.sort(&(&1 >= &2))
-end
 
   @spec best_hand(list(list(String.t()))) :: list(list(String.t()))
   def best_hand(raw_hands) do

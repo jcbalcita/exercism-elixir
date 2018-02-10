@@ -115,8 +115,7 @@ defmodule Hand do
       |> Enum.map(fn c -> {c.rank, c.suit} end)
       |> Enum.sort |> Enum.chunk_by(fn {r, _} -> r end) |> Enum.sort_by(&-Enum.count(&1)) |> List.flatten
 
-    high_hand = apply(Hand, :high_hand, [basic_cards])
-    %Hand{hand | high_hand: high_hand}
+    %Hand{hand | high_hand: high_hand(basic_cards)}
   end
 
   @spec high_hand(list({integer, String.t})) :: {atom, list(integer)}

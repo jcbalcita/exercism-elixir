@@ -58,11 +58,11 @@ defmodule Poker do
     @spec find_winning_hands(list(Hand.t)) :: list(Hand.t)
     def find_winning_hands(hands) do
       best_poker_hand = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
-      tied_hands = Enum.filter(hands, fn h -> h.high_hand |> elem(0) == best_poker_hand.high_hand |> elem(0) end)
+      best_hands = Enum.filter(hands, fn h -> h.high_hand |> elem(0) == best_poker_hand.high_hand |> elem(0) end)
 
-      case Enum.count(tied_hands) > 1 do
-        true  -> break_tie(tied_hands)
-        false -> tied_hands
+      case Enum.count(best_hands) > 1 do
+        true  -> break_tie(best_hands)
+        false -> best_hands
       end
     end
 
@@ -73,6 +73,7 @@ defmodule Poker do
       tied_hands 
       |> Enum.map(fn hand -> {hand.high_hand |> elem(1), hand} end)
       |> compare_high_cards(n_cards_to_compare, 0)
+      |> Enum.map(&elem(&1, 1))
     end
 
     @doc """
@@ -83,7 +84,7 @@ defmodule Poker do
 
     @param tpls
       Contains: 
-      * A list of the Hand's ranks, ordered as appropriate for comparison
+      * A list of the Hand's Card ranks, ordered as appropriate for comparison
       * The Hand itself
     """ 
     def compare_high_cards(tpls, len, i) when i == len, do: tpls

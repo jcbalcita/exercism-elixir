@@ -66,11 +66,11 @@ defmodule Hand do
   @spec determine_winning_hands(list(Hand.t)) :: list(Hand.t)
   def determine_winning_hands(hands) do
     best_hand = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
-    maybe_winning_hands = Enum.filter(hands, fn h -> h.high_hand |> elem(0) == best_hand.high_hand |> elem(0) end)
+    maybe_tied_hands = Enum.filter(hands, fn h -> h.high_hand |> elem(0) == best_hand.high_hand |> elem(0) end)
 
     case Enum.count(maybe_winning_hands) > 1 do
-      true  -> break_tie(maybe_winning_hands)
-      false -> maybe_winning_hands
+      true  -> break_tie(maybe_tied_hands)
+      false -> maybe_tied_hands
     end
   end
 

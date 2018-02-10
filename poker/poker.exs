@@ -64,22 +64,19 @@ defmodule Poker do
 
     @spec determine_winning_hands(list(Hand.t)) :: list(Hand.t)
     def determine_winning_hands(hands) do
-      %{high_hand: {hh, _}} = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
+      %{high_hand: {hh, ranks}} = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
       maybe_tied_hands = Enum.filter(hands, fn %{high_hand: {hh_, _}} -> hh_ == hh end)
 
       case Enum.count(maybe_tied_hands) > 1 do
-        true  -> break_tie(maybe_tied_hands)
+        true  -> break_tie(maybe_tied_hands, Enum.count(ranks))
         false -> maybe_tied_hands
       end
     end
 
-    defp break_tie(tied_hands) do
-      hand = tied_hands |> Enum.at(0)
-      n_ranks_to_compare = hand.high_hand |> elem(1) |> Enum.count
-
-      tied_hands 
+    defp break_tie(tied_hands, num_ranks) do
+      tied_hands
       |> Enum.map(fn hand -> {elem(hand.high_hand, 1), hand} end)
-      |> compare_ranks(n_ranks_to_compare, 0)
+      |> compare_ranks(num_ranks, 0)
       |> Enum.map(&elem(&1, 1))
     end
 
@@ -88,7 +85,7 @@ defmodule Poker do
     defp compare_ranks(tpls, len, i) do
       high_for_round = tpls |> Enum.max_by(fn t -> Enum.at(elem(t, 0), i) end) |> elem(0) |> Enum.at(i)
 
-      tpls 
+      tpls
       |> Enum.filter(fn t -> Enum.at(elem(t, 0), i) == high_for_round end)
       |> compare_ranks(len, i + 1)
     end

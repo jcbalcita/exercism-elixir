@@ -132,16 +132,16 @@ defmodule Hand do
     if is_straight?(ranks), do: {:straight, high_for_straight(ranks)}, else: {:high_card, ranks}
   end
 
-  defp flush_or_straight_flush(ranks) do
-    if is_straight?(ranks), do: {:straight_flush, [List.first(ranks)]}, else: {:flush, ranks}
+  defp flush_or_straight_flush([a | _] = ranks) do
+    if is_straight?(ranks), do: {:straight_flush, [a], else: {:flush, ranks}
   end
 
-  defp is_straight?(rank_list) do
-    replaced_ace = rank_list |> Enum.map(fn r -> if r ==14, do: 1, else: r end)
-    consecutive?(rank_list) || consecutive?(replaced_ace)
+  defp is_straight?(ranks) do
+    replaced_ace = ranks |> Enum.map(fn r -> if r == 14, do: 1, else: r end)
+    consecutive?(ranks) || consecutive?(replaced_ace)
   end
 
-  defp consecutive?(rank_list), do: Enum.max(rank_list) - Enum.min(rank_list) == 4
+  defp consecutive?(ranks), do: Enum.max(ranks) - Enum.min(ranks) == 4
 
   defp high_for_straight([14, x, _, _, 2]), do: [x]
   defp high_for_straight([x | _]), do: [x]

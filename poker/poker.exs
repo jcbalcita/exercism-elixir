@@ -50,7 +50,7 @@ defmodule Poker do
 
 defmodule Hand do
   @moduledoc """
-  Hand, a collection of cards and the ability to analyze and compare poker hands.
+  Hand, the ability to analyze and compare poker hands from a list of cards.
   """
   @type t :: %Hand{high_hand: {atom, list(integer)}, cards: list(Cards.t)}
   defstruct high_hand: nil, cards: nil
@@ -92,7 +92,7 @@ defmodule Hand do
 
   @param tpls
     * A list of the Hand's Card ranks, ordered as appropriate for comparison
-    * The Hand itself
+    * The Hand struct itself
   @param len
     * The length of the list of ranks to compare, so we know when to stop recursing
   @param i
@@ -132,8 +132,8 @@ defmodule Hand do
     if is_straight?(ranks), do: {:straight, high_for_straight(ranks)}, else: {:high_card, ranks}
   end
 
-  defp flush_or_straight_flush([a | _] = ranks) do
-    if is_straight?(ranks), do: {:straight_flush, [a], else: {:flush, ranks}
+  defp flush_or_straight_flush(ranks) do
+    if is_straight?(ranks), do: {:straight_flush, high_for_straight(ranks)}, else: {:flush, ranks}
   end
 
   defp is_straight?(ranks) do

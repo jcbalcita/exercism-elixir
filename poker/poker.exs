@@ -44,8 +44,6 @@ defmodule Poker do
   end
 
   defmodule Hand do
-    alias Poker.Card
-
     @type t :: %Hand{high_hand: {atom(), list(integer)}, cards: list(Cards.t)}
     defstruct high_hand: nil, cards: nil
 
@@ -57,6 +55,7 @@ defmodule Poker do
       |> find_high_hand
     end
 
+    @spec find_winning_hands(list(Hand.t)) :: list(Hand.t)
     def find_winning_hands(hands) do
       best_poker_hand = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
       tied_hands = Enum.filter(hands, fn h -> h.high_hand |> elem(0) == best_poker_hand.high_hand |> elem(0) end)
@@ -69,13 +68,24 @@ defmodule Poker do
 
     def break_tie(tied_hands) do
       hand = tied_hands |> Enum.at(0)
-      compare_length = hand.high_hand |> elem(1) |> Enum.count
+      n_cards_to_compare = hand.high_hand |> elem(1) |> Enum.count
 
-      tied_hands |> Enum.map(fn hand -> {hand.high_hand |> elem(1), hand} end)
-      |> compare_high_cards(compare_length, 0)
-      |> Enum.map(fn t -> elem(t, 1) end)
+      tied_hands 
+      |> Enum.map(fn hand -> {hand.high_hand |> elem(1), hand} end)
+      |> compare_high_cards(n_cards_to_compare, 0)
     end
 
+    @doc """
+    For Hands that make the same poker hand, we compare the ranks of ther respective cards to break the tie.
+    * When flush, compare the rank from the highest card, down to the last if necessary
+    * When 2-pair, compare the rank of the highest pair, then the second pair, then the kicker
+    * etc.
+
+    @param tpls
+      Contains: 
+      * A list of the Hand's ranks, ordered as appropriate for comparison
+      * The Hand itself
+    """ 
     def compare_high_cards(tpls, len, i) when i == len, do: tpls
     def compare_high_cards(tpls, len, i) do
       high_for_round = tpls |> Enum.max_by(fn t -> Enum.at(elem(t, 0), i) end) |> elem(0) |> Enum.at(i)
@@ -94,6 +104,7 @@ defmodule Poker do
       %Hand{hand | high_hand: high_hand}
     end
 
+    @spec high_hand(list({integer, String.t})) :: {atom(), list(integer)}
     def high_hand([{a, s}, {b, s}, {c, s}, {d, s}, {e, s}]), do: flush_or_straight_flush(sort_ [a, b, c, d, e])
     def high_hand([{a, _}, {a, _}, {a, _}, {a, _}, {b, _}]), do: {:four_of_a_kind, [a, b]}
     def high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {b, _}]), do: {:full_house, [a, b]}
@@ -116,8 +127,10 @@ defmodule Poker do
     end
 
     defp consecutive?(rank_list), do: Enum.max(rank_list) - Enum.min(rank_list) == 4
-    defp high_for_straight([14, x, _, _, 2]), do: [5]
+
+    defp high_for_straight([14, x, _, _, 2]), do: [x]
     defp high_for_straight([x | _]), do: [x]
+
     defp sort_(list), do: list |> Enum.sort(&(&1 >= &2))
   end
 
@@ -129,6 +142,9 @@ defmodule Poker do
     |> Enum.map(&transform_to_raw_hand/1)
   end
 
+  @spec transform_to_hand(list(String.t)) :: list(Card.t)
   defp transform_to_hand(raw_hand), do: raw_hand |> Enum.map(&Card.new/1) |> Hand.new
-  defp transform_to_raw_hand(hands), do: Enum.map(hands.cards, &Card.to_s/1)
+
+  @spec transform_to_raw_hand(list(Card.t)) :: list(String.t)
+  defp transform_to_raw_hand(hand), do: Enum.map(hand.cards, &Card.to_s/1)
 end

@@ -64,8 +64,8 @@ defmodule Hand do
 
   @spec determine_winning_hands(list(Hand.t)) :: list(Hand.t)
   def determine_winning_hands(hands) do
-    best_hand = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
-    maybe_tied_hands = Enum.filter(hands, fn h -> h.high_hand |> elem(0) == best_hand.high_hand |> elem(0) end)
+    %{high_hand: {hh, _}} = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
+    maybe_tied_hands = Enum.filter(hands, fn %{high_hand: {hh_, _}} -> hh_ == hh end)
 
     case Enum.count(maybe_tied_hands) > 1 do
       true  -> break_tie(maybe_tied_hands)
@@ -83,20 +83,6 @@ defmodule Hand do
     |> Enum.map(&elem(&1, 1))
   end
 
-  @doc """
-  For Hands that make the same poker hand, we compare the ranks of ther respective cards to break the tie.
-  * When flush, compare the rank from the highest card, down to the last if necessary
-  * When 2-pair, compare the rank of the highest pair, then the second pair, then the kicker
-  * etc.
-
-  @param tpls
-    * A list of the Hand's Card ranks, ordered as appropriate for comparison
-    * The Hand struct itself
-  @param len
-    * The length of the list of ranks to compare, so we know when to stop recursing
-  @param i
-    * The index of the list of ranks to compare across hands
-  """ 
   @spec compare_ranks(list({list(integer), Hand.t}), integer, integer) :: list({list(integer), Hand.t})
   defp compare_ranks(tpls, len, i) when i == len, do: tpls
   defp compare_ranks(tpls, len, i) do
@@ -145,7 +131,7 @@ defmodule Hand do
   defp high_for_straight([x | _]), do: [x]
 
   defp sort_(list), do: list |> Enum.sort(&(&1 >= &2))
-  end
+end
 
   @spec best_hand(list(list(String.t()))) :: list(list(String.t()))
   def best_hand(raw_hands) do

@@ -43,8 +43,7 @@ defmodule Poker do
       %Card{suit: suit, str_rank: str_rank, rank: @str_rank_to_int[str_rank]}
     end
 
-    def get_rank(card), do: card.rank
-    def to_s(card), do: card.str_rank <> card.suit
+    def to_string(card), do: card.str_rank <> card.suit
   end
 
 
@@ -68,7 +67,7 @@ defmodule Hand do
     best_hand = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
     maybe_tied_hands = Enum.filter(hands, fn h -> h.high_hand |> elem(0) == best_hand.high_hand |> elem(0) end)
 
-    case Enum.count(maybe_winning_hands) > 1 do
+    case Enum.count(maybe_tied_hands) > 1 do
       true  -> break_tie(maybe_tied_hands)
       false -> maybe_tied_hands
     end
@@ -160,5 +159,5 @@ defmodule Hand do
   defp transform_to_hand(raw_hand), do: raw_hand |> Enum.map(&Card.new/1) |> Hand.new
 
   @spec transform_to_raw_hand(list(Card.t)) :: list(String.t)
-  defp transform_to_raw_hand(hand), do: Enum.map(hand.cards, &Card.to_s/1)
+  defp transform_to_raw_hand(hand), do: Enum.map(hand.cards, &Card.to_string/1)
 end

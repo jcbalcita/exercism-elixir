@@ -64,7 +64,7 @@ defmodule Poker do
 
     @spec determine_winning_hands(list(Hand.t)) :: list(Hand.t)
     def determine_winning_hands(hands) do
-      %{high_hand: {hh, ranks}} = hands |> Enum.max_by(fn h -> Enum.find_index(@poker_hands, fn p -> p == elem(h.high_hand, 0) end) end)
+      %{high_hand: {hh, ranks}} = hands |> Enum.max_by(&rank_of_hand/1)
       maybe_tied_hands = Enum.filter(hands, fn %{high_hand: {hh_, _}} -> hh_ == hh end)
 
       case Enum.count(maybe_tied_hands) > 1 do
@@ -128,12 +128,14 @@ defmodule Poker do
     defp high_for_straight([x | _]), do: [x]
 
     defp sort_(list), do: list |> Enum.sort(&(&1 >= &2))
+
+    defp rank_of_hand(hand), do: Enum.find_index(@poker_hands, fn p -> p == elem(hand.high_hand, 0) end)
   end
 
   @spec best_hand(list(list(String.t()))) :: list(list(String.t()))
   def best_hand(raw_hands) do
     raw_hands
-    |> Enum.map(&transform_to_hand(&1))
+    |> Enum.map(&transform_to_hand/1)
     |> Hand.determine_winning_hands
     |> Enum.map(&transform_to_raw_hand/1)
   end

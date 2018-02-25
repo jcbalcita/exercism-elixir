@@ -75,18 +75,18 @@ defmodule Poker do
 
     defp break_tie(tied_hands, num_ranks) do
       tied_hands
-      |> Enum.map(fn hand -> {elem(hand.high_hand, 1), hand} end)
+      |> Enum.map(fn hand -> {hand, elem(hand.high_hand, 1)} end)
       |> compare_ranks(num_ranks, 0)
-      |> Enum.map(&elem(&1, 1))
+      |> Enum.map(&elem(&1, 0))
     end
 
-    @spec compare_ranks(list({list(integer), Hand.t}), integer, integer) :: list({list(integer), Hand.t})
-    defp compare_ranks(tpls, len, i) when i == len, do: tpls
-    defp compare_ranks(tpls, len, i) do
-      high_for_round = tpls |> Enum.max_by(fn t -> Enum.at(elem(t, 0), i) end) |> elem(0) |> Enum.at(i)
+    @spec compare_ranks(list({Hand.t, list(integer)}), integer, integer) :: list({list(integer), Hand.t})
+    defp compare_ranks(hand_rank_tuples, len, i) when i == len, do: hand_rank_tuples
+    defp compare_ranks(hand_rank_tuples, len, i) do
+      high_rank_for_round = hand_rank_tuples |> Enum.max_by(fn t -> Enum.at(elem(t, 1), i) end) |> elem(1) |> Enum.at(i)
 
-      tpls
-      |> Enum.filter(fn t -> Enum.at(elem(t, 0), i) == high_for_round end)
+      hand_rank_tuples
+      |> Enum.filter(fn t -> Enum.at(elem(t, 1), i) == high_rank_for_round end)
       |> compare_ranks(len, i + 1)
     end
 
@@ -101,19 +101,19 @@ defmodule Poker do
     end
 
     @spec high_hand(list({integer, String.t})) :: {atom, list(integer)}
-    defp high_hand([{a, s}, {b, s}, {c, s}, {d, s}, {e, s}]), do: flush_or_straight_flush(sort_ [a, b, c, d, e])
+    defp high_hand([{a, s}, {b, s}, {c, s}, {d, s}, {e, s}]), do: flush_or_straight_flush?(sort_ [a, b, c, d, e])
     defp high_hand([{a, _}, {a, _}, {a, _}, {a, _}, {b, _}]), do: {:four_of_a_kind, [a, b]}
     defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {b, _}]), do: {:full_house, [a, b]}
-    defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {c, _}]), do: {:three_of_a_kind, [a | sort_([b, c])]}
-    defp high_hand([{a, _}, {a, _}, {b, _}, {b, _}, {c, _}]), do: {:two_pair, [sort_([a, b]), c]}
-    defp high_hand([{a, _}, {a, _}, {b, _}, {c, _}, {d, _}]), do: {:one_pair, [a | sort_([b, c, d])]}
-    defp high_hand([{a, _}, {b, _}, {c, _}, {d, _}, {e, _}]), do: straight_or_high_card(sort_ [a, b, c, d, e])
+    defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {c, _}]), do: {:three_of_a_kind, [a] ++ sort_ [b, c]}
+    defp high_hand([{a, _}, {a, _}, {b, _}, {b, _}, {c, _}]), do: {:two_pair, sort_([a, b]) ++ [c]}
+    defp high_hand([{a, _}, {a, _}, {b, _}, {c, _}, {d, _}]), do: {:one_pair, [a] ++ sort_ [b, c, d]}
+    defp high_hand([{a, _}, {b, _}, {c, _}, {d, _}, {e, _}]), do: straight_or_high_card?(sort_ [a, b, c, d, e])
 
-    defp straight_or_high_card(ranks) do
+    defp straight_or_high_card?(ranks) do
       if is_straight?(ranks), do: {:straight, high_for_straight(ranks)}, else: {:high_card, ranks}
     end
 
-    defp flush_or_straight_flush(ranks) do
+    defp flush_or_straight_flush?(ranks) do
       if is_straight?(ranks), do: {:straight_flush, high_for_straight(ranks)}, else: {:flush, ranks}
     end
 

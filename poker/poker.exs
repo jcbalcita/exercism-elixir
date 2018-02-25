@@ -81,11 +81,11 @@ defmodule Poker do
     end
 
     @spec compare_ranks(list({Hand.t, list(integer)}), integer, integer) :: list({list(integer), Hand.t})
-    defp compare_ranks(hand_rank_tuples, len, i) when i == len, do: hand_rank_tuples
-    defp compare_ranks(hand_rank_tuples, len, i) do
-      high_rank_for_round = hand_rank_tuples |> Enum.max_by(fn t -> Enum.at(elem(t, 1), i) end) |> elem(1) |> Enum.at(i)
+    defp compare_ranks(tuples, len, i) when i == len, do: tuples
+    defp compare_ranks(tuples, len, i) do
+      high_rank_for_round = tuples |> Enum.max_by(fn t -> Enum.at(elem(t, 1), i) end) |> elem(1) |> Enum.at(i)
 
-      hand_rank_tuples
+      tuples
       |> Enum.filter(fn t -> Enum.at(elem(t, 1), i) == high_rank_for_round end)
       |> compare_ranks(len, i + 1)
     end
@@ -101,13 +101,13 @@ defmodule Poker do
     end
 
     @spec high_hand(list({integer, String.t})) :: {atom, list(integer)}
-    defp high_hand([{a, s}, {b, s}, {c, s}, {d, s}, {e, s}]), do: flush_or_straight_flush?(sort_ [a, b, c, d, e])
+    defp high_hand([{a, s}, {b, s}, {c, s}, {d, s}, {e, s}]), do: flush_or_straight_flush?(sort [a, b, c, d, e])
     defp high_hand([{a, _}, {a, _}, {a, _}, {a, _}, {b, _}]), do: {:four_of_a_kind, [a, b]}
     defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {b, _}]), do: {:full_house, [a, b]}
-    defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {c, _}]), do: {:three_of_a_kind, [a] ++ sort_ [b, c]}
-    defp high_hand([{a, _}, {a, _}, {b, _}, {b, _}, {c, _}]), do: {:two_pair, sort_([a, b]) ++ [c]}
-    defp high_hand([{a, _}, {a, _}, {b, _}, {c, _}, {d, _}]), do: {:one_pair, [a] ++ sort_ [b, c, d]}
-    defp high_hand([{a, _}, {b, _}, {c, _}, {d, _}, {e, _}]), do: straight_or_high_card?(sort_ [a, b, c, d, e])
+    defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {c, _}]), do: {:three_of_a_kind, [a] ++ sort [b, c]}
+    defp high_hand([{a, _}, {a, _}, {b, _}, {b, _}, {c, _}]), do: {:two_pair, sort([a, b]) ++ [c]}
+    defp high_hand([{a, _}, {a, _}, {b, _}, {c, _}, {d, _}]), do: {:one_pair, [a] ++ sort [b, c, d]}
+    defp high_hand([{a, _}, {b, _}, {c, _}, {d, _}, {e, _}]), do: straight_or_high_card?(sort [a, b, c, d, e])
 
     defp straight_or_high_card?(ranks) do
       if is_straight?(ranks), do: {:straight, high_for_straight(ranks)}, else: {:high_card, ranks}
@@ -127,7 +127,7 @@ defmodule Poker do
     defp high_for_straight([14, x, _, _, 2]), do: [x]
     defp high_for_straight([x | _]), do: [x]
 
-    defp sort_(list), do: list |> Enum.sort(&(&1 >= &2))
+    defp sort(list), do: list |> Enum.sort(&(&1 >= &2))
 
     defp rank_of_hand(hand), do: Enum.find_index(@poker_hands, fn p -> p == elem(hand.high_hand, 0) end)
   end

@@ -101,7 +101,7 @@ defmodule Poker do
     end
 
     @spec high_hand(list({integer, String.t})) :: {atom, list(integer)}
-    defp high_hand([{a, s}, {b, s}, {c, s}, {d, s}, {e, s}]), do: flush_or_straight_flush?(sort [a, b, c, d, e])
+    defp high_hand([{a, s}, {b, s}, {c, s}, {d, s}, {e, s}]), do: flush_or_straight_flush?([a, b, c, d, e])
     defp high_hand([{a, _}, {a, _}, {a, _}, {a, _}, {b, _}]), do: {:four_of_a_kind, [a, b]}
     defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {b, _}]), do: {:full_house, [a, b]}
     defp high_hand([{a, _}, {a, _}, {a, _}, {b, _}, {c, _}]), do: {:three_of_a_kind, [a] ++ sort [b, c]}
@@ -143,6 +143,6 @@ defmodule Poker do
   @spec transform_to_hand(list(String.t)) :: list(Card.t)
   defp transform_to_hand(raw_hand), do: raw_hand |> Enum.map(&Card.new/1) |> Hand.new
 
-  @spec transform_to_raw_hand(list(Card.t)) :: list(String.t)
+  @spec transform_to_raw_hand(Hand.t) :: list(String.t)
   defp transform_to_raw_hand(hand), do: Enum.map(hand.cards, &Card.to_string/1)
 end
